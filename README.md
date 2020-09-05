@@ -17,6 +17,9 @@
 - springboot
 
 ## 三、使用说明
+### 目录结构
+- sqlmgr-server 后端项目 
+- sqlmgr-web 前端项目
 ### 1.生成前端网页
 - 1.1 切换到web目录，该目录为前端项目
 - 1.2 执行`npm i `安装依赖

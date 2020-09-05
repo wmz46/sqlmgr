@@ -1,6 +1,6 @@
 module.exports = {
   publicPath: "./",
-  outputDir: "../src/main/resources/static",
+  outputDir: "../sqlmgr-server/src/main/resources/static",
   pages: {
     index: {
       entry: 'src/main.js',
