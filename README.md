@@ -13,6 +13,7 @@
 - vue
 - vue-cli
 - vuetify
+- codemirror
 ### 后端
 - springboot
 
