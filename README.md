@@ -22,9 +22,9 @@
 - sqlmgr-server 后端项目 
 - sqlmgr-web 前端项目
 ### 1.生成前端网页
-- 1.1 切换到web目录，该目录为前端项目
+- 1.1 切换到sqlmgr-web目录，该目录为前端项目
 - 1.2 执行`npm i `安装依赖
-- 1.3 执行`npm run build` 打包，web/vue.config.js里面已经配置了输出目录为java项目的静态资源文件目录。
+- 1.3 执行`npm run build` 打包，sqlmgr-web/vue.config.js里面已经配置了输出目录为java项目的静态资源文件目录。
 ### 2.调试或打包后端项目
 
 ## 四、操作流程
