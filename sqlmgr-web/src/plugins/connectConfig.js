@@ -39,9 +39,8 @@ export default {
             throw ("没找到名称为[" + name + "]的连接");
         }
     },
-    removeConnect(item) {
+    removeConnect(name) {
         let storageName = "connects";
-        let name = item.name;
         let connects = JSON.parse(window.localStorage.getItem(storageName));
         if (connects && connects[name]) {
             delete connects[name];

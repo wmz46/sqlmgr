@@ -86,14 +86,8 @@
                 }
 
             },
-            remove() {
-                connectConfig.removeConnect({
-                    name: this.name,
-                    driver: this.driver,
-                    url: this.url,
-                    username: this.username,
-                    password: this.password,
-                });
+            remove(name) {
+                connectConfig.removeConnect(name);
                 this.visible = false;
             },
             save() {
