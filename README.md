@@ -5,7 +5,7 @@
 - 2.支持导出数据库文档(md格式) 模板文件:MarkdownTemplate.vue
 - 3.支持导出单表的insert文件(sql格式) 模板文件:InsertTemplate.vue
 - 4.支持生成单表建表脚本
-- 5.支持mysql,h2,mssql,达梦数据库
+- 5.支持mysql,h2,sqlserver,达梦数据库
 - 6.上述功能不支持视图、索引和存储过程
  
 ## 二、使用的技术
