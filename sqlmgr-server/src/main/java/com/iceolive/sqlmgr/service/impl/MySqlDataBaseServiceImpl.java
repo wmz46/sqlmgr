@@ -1,5 +1,6 @@
 package com.iceolive.sqlmgr.service.impl;
 
+import com.alibaba.druid.util.JdbcConstants;
 import com.iceolive.sqlmgr.model.Column;
 import com.iceolive.sqlmgr.model.Schema;
 import com.iceolive.sqlmgr.model.Table;
@@ -29,7 +30,7 @@ public class MySqlDataBaseServiceImpl implements DataBaseService {
 
     private static final String[] NUMERIC_TYPE = new String[]{"TINYINT", "SMALLINT", "MEDIUMINT", "INT", "INTEGER",
             "BIGINT", "FLOAT", "DOUBLE", "DECIMAL"};
-    private static final String DRIVER_CLASS_NAME = "com.mysql.cj.jdbc.Driver";
+    private static final String DRIVER_CLASS_NAME = JdbcConstants.MYSQL_DRIVER_6;
     private String url;
     private String username;
     private String password;

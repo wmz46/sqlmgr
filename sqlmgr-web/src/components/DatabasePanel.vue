@@ -181,9 +181,7 @@
         data.append("tableName", tableName)
         this.$axios.post(config.apiUrl + '/api/generateDropTableSQLScript', data).then(res => {
           if (res.data.success) {
-            let sql = that.editor.getValue();
-            sql += '\n' + res.data.data;
-            this.editor.setValue(sql);
+            that.$emit('output', res.data.data);
           } else {
             that.$throw(res.data.message);
           }
@@ -203,9 +201,7 @@
         data.append("tableName", tableName)
         this.$axios.post(config.apiUrl + '/api/generateCreateTableSQLScript', data).then(res => {
           if (res.data.success) {
-            let sql = that.editor.getValue();
-            sql += '\n' + res.data.data;
-            this.editor.setValue(sql);
+            that.$emit('output', res.data.data);
           } else {
             that.$throw(res.data.message);
           }

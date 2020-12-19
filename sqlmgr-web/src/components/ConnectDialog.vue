@@ -37,16 +37,18 @@
 </template>
 <script>
     import connectConfig from "@/plugins/connectConfig"
+    import config from '@/plugins/config'
+    const  defaultDriver = config.dbType.mysql
     export default {
         name: "ConnectDialog",
         data() {
             return {
                 storageName: "connects",
-                drivers: ["mysql", "h2", "mssql"],
+                drivers: [config.dbType.mysql, config.dbType.h2, config.dbType.sqlserver,config.dbType.dm],
                 name: "",
                 modal: "add",
                 visible: false,
-                driver: "mysql",
+                driver: defaultDriver,
                 url: "",
                 username: "",
                 password: "",
@@ -54,12 +56,14 @@
         },
         computed: {
             hint() {
-                if (this.driver == "mysql") {
+                if (this.driver == config.dbType.mysql) {
                     return "jdbc:mysql://{ip}:{port}/{db}?serverTimezone=GMT%2B8";
-                } else if (this.driver == "h2") {
+                } else if (this.driver == config.dbType.h2) {
                     return "jdbc:h2:tcp://{ip}:{port}//{path}";
-                } else if (this.driver == "mssql") {
+                } else if (this.driver == config.dbType.sqlserver) {
                     return "jdbc:sqlserver://{ip}:{port};database={db}";
+                } else if (this.driver == config.dbType.dm) {
+                    return "jdbc:dm://{ip}:{port}/{db}";
                 } else {
                     return "";
                 }
@@ -78,7 +82,7 @@
                     this.modal = 'update';
                 } else {
                     this.name = '';
-                    this.driver = 'mysql';
+                    this.driver = defaultDriver;
                     this.url = '';
                     this.username = '';
                     this.password = '';

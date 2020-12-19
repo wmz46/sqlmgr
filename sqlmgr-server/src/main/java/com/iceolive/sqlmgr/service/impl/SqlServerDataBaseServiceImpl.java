@@ -1,5 +1,6 @@
 package com.iceolive.sqlmgr.service.impl;
 
+import com.alibaba.druid.util.JdbcConstants;
 import com.iceolive.sqlmgr.model.Column;
 import com.iceolive.sqlmgr.model.Schema;
 import com.iceolive.sqlmgr.model.Table;
@@ -19,7 +20,7 @@ import java.util.stream.Collectors;
 /**
  * @author wangmianzhe
  */
-public class MsSqlDataBaseServiceImpl implements DataBaseService {
+public class SqlServerDataBaseServiceImpl implements DataBaseService {
     @Override
     public String getVersion() {
         String sql = "SELECT @@VERSION;";
@@ -29,13 +30,13 @@ public class MsSqlDataBaseServiceImpl implements DataBaseService {
 
     private static final String[] NUMERIC_TYPE = new String[]{"BIT", "SMALLINT", "MEDIUMINT", "INT", "INTEGER",
             "BIGINT", "FLOAT", "DOUBLE", "DECIMAL"};
-    private static final String DRIVER_CLASS_NAME = "com.microsoft.sqlserver.jdbc.SQLServerDriver";
+    private static final String DRIVER_CLASS_NAME = JdbcConstants.SQL_SERVER_DRIVER_SQLJDBC4;
     private String url;
     private String username;
     private String password;
     private JdbcTemplate jdbcTemplate;
 
-    public MsSqlDataBaseServiceImpl(String url, String username, String password) {
+    public SqlServerDataBaseServiceImpl(String url, String username, String password) {
         this.url = url;
         this.username = username;
         this.password = password;

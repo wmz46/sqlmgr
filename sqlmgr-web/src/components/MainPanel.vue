@@ -2,11 +2,11 @@
   <splitPane :min-percent='20' :default-percent='20' split="vertical">
     <template slot="paneL">
       <div class="fill-height" style="overflow: auto;">
-        <DatabasePanel  @loaded="dbInfoLoaded"></DatabasePanel>
+        <DatabasePanel @loaded="dbInfoLoaded" @output="outputSql"></DatabasePanel>
       </div>
     </template>
     <template slot="paneR">
-      <ConsolePanel ref="consolePanel" ></ConsolePanel>
+      <ConsolePanel ref="consolePanel"></ConsolePanel>
     </template>
   </splitPane>
 </template>
@@ -16,8 +16,7 @@
   import ConsolePanel from '@/components/ConsolePanel'
   export default {
     data() {
-      return {
-      }
+      return {}
     },
     methods: {
       dbInfoLoaded(tables) {
@@ -25,10 +24,13 @@
         this.$refs.consolePanel.editor.setOption('hintOptions', {
           tables: tables
         });
+      },
+      outputSql(sql) {
+        let editor = this.$refs.consolePanel.editor;
+        editor.setValue(editor.getValue() + '\n' + sql);
       }
     },
-    created() {
-    },
+    created() {},
     components: {
       splitPane,
       DatabasePanel,

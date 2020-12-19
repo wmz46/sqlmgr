@@ -1,10 +1,12 @@
 package com.iceolive.sqlmgr.controller;
 
+import com.alibaba.druid.util.JdbcConstants;
 import com.iceolive.sqlmgr.model.BaseResult;
 import com.iceolive.sqlmgr.model.vo.SchemaVO;
 import com.iceolive.sqlmgr.service.DataBaseService;
+import com.iceolive.sqlmgr.service.impl.DmDataBaseServiceImpl;
 import com.iceolive.sqlmgr.service.impl.H2DataBaseServiceImpl;
-import com.iceolive.sqlmgr.service.impl.MsSqlDataBaseServiceImpl;
+import com.iceolive.sqlmgr.service.impl.SqlServerDataBaseServiceImpl;
 import com.iceolive.sqlmgr.service.impl.MySqlDataBaseServiceImpl;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -21,6 +23,14 @@ import java.util.Map;
 @RestController
 @RequestMapping("/api")
 public class ApiController {
+    /**
+     * 获取数据库信息
+     * @param driver
+     * @param url
+     * @param username
+     * @param password
+     * @return
+     */
     @RequestMapping(value = "/getAllInfo")
     public BaseResult getAllInfo(String driver, String url, String username, String password) {
         BaseResult result = new BaseResult();
@@ -29,6 +39,15 @@ public class ApiController {
         return result.success(list);
     }
 
+    /**
+     * 查询或执行sql
+     * @param driver
+     * @param url
+     * @param username
+     * @param password
+     * @param sql
+     * @return
+     */
     @RequestMapping(value = "/query")
     public BaseResult query(String driver, String url, String username, String password, String sql) {
         BaseResult result = new BaseResult();
@@ -51,6 +70,16 @@ public class ApiController {
         return result.success(list);
     }
 
+    /**
+     * 生成建表脚本
+     * @param driver
+     * @param url
+     * @param username
+     * @param password
+     * @param schemaName
+     * @param tableName
+     * @return
+     */
     @RequestMapping(value = "/generateCreateTableSQLScript")
     public BaseResult generateCreateTableSQLScript(String driver, String url, String username, String password, String schemaName, String tableName) {
         BaseResult result = new BaseResult();
@@ -59,6 +88,16 @@ public class ApiController {
         return result.success(sql);
     }
 
+    /**
+     * 生成删表脚本
+     * @param driver
+     * @param url
+     * @param username
+     * @param password
+     * @param schemaName
+     * @param tableName
+     * @return
+     */
     @RequestMapping(value = "/generateDropTableSQLScript")
     public BaseResult generateDropTableSQLScript(String driver, String url, String username, String password, String schemaName, String tableName) {
         BaseResult result = new BaseResult();
@@ -69,12 +108,14 @@ public class ApiController {
 
     private DataBaseService getDataBaseService(String driver, String url, String username, String password) {
         DataBaseService service = null;
-        if ("mysql".equals(driver)) {
+        if (JdbcConstants.MYSQL.equals(driver)) {
             service = new MySqlDataBaseServiceImpl(url, username, password);
-        } else if ("h2".equals(driver)) {
+        } else if (JdbcConstants.H2.equals(driver)) {
             service = new H2DataBaseServiceImpl(url, username, password);
-        } else  if ("mssql".equals(driver)) {
-            service = new MsSqlDataBaseServiceImpl(url, username, password);
+        } else  if (JdbcConstants.SQL_SERVER.equals(driver)) {
+            service = new SqlServerDataBaseServiceImpl(url, username, password);
+        }else  if (JdbcConstants.DM.equals(driver)) {
+            service = new DmDataBaseServiceImpl(url, username, password);
         }else {
             throw new RuntimeException("不支持的数据库类型");
         }

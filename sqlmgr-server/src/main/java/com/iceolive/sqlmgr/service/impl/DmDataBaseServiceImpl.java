@@ -12,7 +12,6 @@ import com.iceolive.sqlmgr.util.MapperUtil;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.jdbc.core.BeanPropertyRowMapper;
 import org.springframework.jdbc.core.JdbcTemplate;
-import org.springframework.stereotype.Service;
 
 import java.text.MessageFormat;
 import java.util.*;
@@ -21,16 +20,17 @@ import java.util.stream.Collectors;
 /**
  * @author wangmianzhe
  */
-public class H2DataBaseServiceImpl  implements DataBaseService {
-    private static final String DRIVER_CLASS_NAME = JdbcConstants.H2_DRIVER;
+public class DmDataBaseServiceImpl implements DataBaseService {
+    private static final String DRIVER_CLASS_NAME = JdbcConstants.DM_DRIVER;
     private String url;
     private String username;
     private String password;
     private JdbcTemplate jdbcTemplate;
     private static final String[] NUMERIC_TYPE = new String[]{"TINYINT", "SMALLINT", "MEDIUMINT", "INT", "INTEGER",
             "BIGINT", "FLOAT", "DOUBLE", "DECIMAL"};
+    private static final String[] STRING_TYPE = new String[]{"CHAR","VARCHAR","VARCHAR2"};
 
-    public H2DataBaseServiceImpl(String url, String username, String password) {
+    public DmDataBaseServiceImpl(String url, String username, String password) {
         this.url = url;
         this.username = username;
         this.password = password;
@@ -43,24 +43,20 @@ public class H2DataBaseServiceImpl  implements DataBaseService {
 
     @Override
     public List<Schema> getSchemaList() {
-        String sql = "SELECT DISTINCT TABLE_SCHEMA name\n" +
-                "FROM INFORMATION_SCHEMA.TABLES;";
-        List<Schema> schemaList = jdbcTemplate.query(sql, new BeanPropertyRowMapper<>(Schema.class));
-        List<String> sysSchema = new ArrayList<>();
-        sysSchema.add("INFORMATION_SCHEMA");
-        schemaList = schemaList.stream().filter(m -> !sysSchema.contains(m.getName())).collect(Collectors.toList());
+        List<Schema> schemaList = new ArrayList<>();
+        Schema schema = new Schema();
+        schema.setName(this.username);
+        schemaList.add(schema);
         return schemaList;
     }
 
     @Override
     public List<Table> getTableList(String schemaName) {
-        List<Object> params = new ArrayList<>();
-        params.add(schemaName);
-        String sql = "SELECT TABLE_NAME name,REMARKS comment\n" +
-                "FROM INFORMATION_SCHEMA.TABLES\n" +
-                "WHERE TABLE_SCHEMA=?\n"+
-                "ORDER BY TABLE_NAME;";
-        List<Table> tableList = jdbcTemplate.query(sql, params.toArray(), new BeanPropertyRowMapper<>(Table.class));
+        String sql = "SELECT TABLE_NAME name,COMMENTS \"comment\" \n" +
+                "from USER_TAB_COMMENTS \n" +
+                "WHERE table_type = 'TABLE'\n" +
+                "ORDER BY TABLE_NAME";
+        List<Table> tableList = jdbcTemplate.query(sql, new BeanPropertyRowMapper<>(Table.class));
 
         return tableList;
     }
@@ -68,21 +64,22 @@ public class H2DataBaseServiceImpl  implements DataBaseService {
     @Override
     public List<Column> getColumnList(String schemaName, String tableName) {
         List<Object> params = new ArrayList<>();
-        params.add(schemaName);
         params.add(tableName);
-        params.add(schemaName);
         params.add(tableName);
-        String sql = "SELECT COLUMN_NAME name,REMARKS comment,\n" +
-                "SUBSTRING(COLUMN_TYPE,0,LOCATE(' ',COLUMN_TYPE)) type,\n" +
-                "(CASE WHEN IS_NULLABLE='NO' THEN 0 ELSE 1 END) nullable,\n" +
-                "(SELECT COUNT(1) FROM INFORMATION_SCHEMA.KEY_COLUMN_USAGE WHERE TABLE_SCHEMA=? AND TABLE_NAME=? AND COLUMN_NAME=INFORMATION_SCHEMA.COLUMNS.COLUMN_NAME) primaryKey,\n" +
-                "(CASE WHEN COLUMN_TYPE like '%NEXT VALUE FOR%' THEN 1 ELSE 0 END) identity,\n" +
-                "(CASE WHEN TYPE_NAME='float' OR TYPE_NAME='double' OR TYPE_NAME='decimal' THEN NUMERIC_PRECISION ELSE CHARACTER_MAXIMUM_LENGTH END) length,\n" +
-                "(CASE WHEN LOCATE('NEXT VALUE FOR',COLUMN_DEFAULT)=1 THEN null ELSE COLUMN_DEFAULT END) columnDefault,\n" +
-                "NUMERIC_SCALE numericScale\n" +
-                "FROM INFORMATION_SCHEMA.COLUMNS\n" +
-                "WHERE TABLE_SCHEMA=? AND TABLE_NAME=?\n"+
-                "order by ORDINAL_POSITION;";
+        String sql = "SELECT t1.NAME name,\n" +
+                "t3.COMMENTS \"comment\",\n" +
+                "t1.TYPE$ type,\n" +
+                "(CASE WHEN t1.NULLABLE$='N' THEN 0 ELSE 1 END) nullable,\n" +
+                "(SELECT COUNT(1) FROM USER_CONS_COLUMNS t4 LEFT JOIN USER_CONSTRAINTS t5 ON t4.CONSTRAINT_NAME=t5.CONSTRAINT_NAME WHERE t5.CONSTRAINT_TYPE = 'P' AND t4.TABLE_NAME=? AND t4.COLUMN_NAME=t1.NAME) primaryKey,\n" +
+                "(CASE WHEN t1.info2 =1 THEN 1 ELSE 0 END) \"identity\",\n" +
+                "t1.LENGTH$ length,\n" +
+                "t1.DEFVAL columnDefault,\n" +
+                "t1.SCALE numericScale\n" +
+                "FROM SYS.SYSCOLUMNS t1\n" +
+                "INNER JOIN SYS.SYSOBJECTS t2 ON t1.ID = t2.ID\n" +
+                "LEFT JOIN USER_COL_COMMENTS t3 ON t2.NAME = t3.TABLE_NAME AND t1.NAME = t3.COLUMN_NAME\n" +
+                "WHERE  t2.NAME=? AND t2.TYPE$='SCHOBJ' AND t2.SUBTYPE$='UTAB'\n" +
+                "ORDER BY t1.COLID;";
         List<Column> columnList = jdbcTemplate.query(sql, params.toArray(), new BeanPropertyRowMapper<>(Column.class));
         for(Column column : columnList){
             column.setNumericType(Arrays.stream(NUMERIC_TYPE).anyMatch(m -> column.getType().toUpperCase().startsWith(m)));
@@ -119,29 +116,30 @@ public class H2DataBaseServiceImpl  implements DataBaseService {
             String maxDefault = columnList.stream().max(Comparator.comparing(m -> m.getColumnDefault() == null ? 0 : m.getColumnDefault().length())).get().getColumnDefault();
             int maxDefaultLength = maxDefault != null ? maxDefault.length() : 0;
             int maxNullLength = columnList.stream().anyMatch(m -> !m.getNullable()) ? 9 : 5;
-            String sql = MessageFormat.format("create table if not exists `{0}`\n", table.getName());
+            String sql = MessageFormat.format("create table  \"{0}\"\n", table.getName());
             sql += "(\n";
             for (int i = 0; i < columnList.size(); i++) {
                 Column column = columnList.get(i);
                 sql += "    ";
-                sql += StringUtils.rightPad(MessageFormat.format("`{0}`", column.getName()), maxNameLength + 2, " ");
-                sql += StringUtils.rightPad(" " + column.getType(), maxTypeLength + 1, " ");
+                sql += StringUtils.rightPad(MessageFormat.format("\"{0}\"", column.getName()), maxNameLength + 2, " ");
+                String type= column.getType();
+
+                if(Arrays.stream(STRING_TYPE).anyMatch(m ->column.getType().toUpperCase().startsWith(m))){
+                    type += "("+column.getLength()+")";
+                }else if(type.toUpperCase().equals("DECIMAL")){
+                    type += "("+column.getLength()+","+column.getNumericScale()+")";
+                }
+                sql += StringUtils.rightPad(" " + type, maxTypeLength + 1, " ");
 
                 if (column.getIdentity()) {
-                    sql += StringUtils.rightPad(" auto_increment", maxDefaultLength + 11+ maxNullLength, " ");
+                    sql += StringUtils.rightPad(" identity", maxDefaultLength + 11+ maxNullLength, " ");
                 } else {
                     String defaultFormat;
-                    if (column.getNumericType()) {
-                        defaultFormat = " default {0}";
-                    } else {
-                        defaultFormat = " default ''{0}''";
-                    }
+                    defaultFormat = " default {0}";
                     sql += StringUtils.rightPad(column.getColumnDefault() != null ? MessageFormat.format(defaultFormat, column.getColumnDefault()) : "", maxDefaultLength + 11, " ");
                     sql += StringUtils.rightPad(column.getNullable() ? " null" : " not null", maxNullLength, " ");
                 }
-                if (StringUtils.isNotEmpty(column.getComment())) {
-                    sql += MessageFormat.format(" comment ''{0}''", column.getComment());
-                }
+
                 if (column.getPrimaryKey()) {
                     sql += "\n        primary key";
                 }
@@ -152,10 +150,17 @@ public class H2DataBaseServiceImpl  implements DataBaseService {
             }
             sql += ")";
 
-            if (StringUtils.isNotEmpty(table.getComment())) {
-                sql += MessageFormat.format("\n    comment ''{0}''", table.getComment());
-            }
             sql+=";";
+            //添加表和字段注释
+            if (StringUtils.isNotEmpty(table.getComment())) {
+                sql += MessageFormat.format("\ncomment on table  \"{0}\" is ''{1}''; ",table.getName(), table.getComment());
+            }
+            for (int i = 0; i < columnList.size(); i++) {
+                Column column = columnList.get(i);
+                if (StringUtils.isNotEmpty(column.getComment())) {
+                    sql += MessageFormat.format("\ncomment on column \"{0}\".\"{1}\" is ''{2}''; ",table.getName(),column.getName(), column.getComment());
+                }
+            }
             //todo 如果有索引怎么生成索引脚本
             return sql;
         } else {
@@ -168,7 +173,7 @@ public class H2DataBaseServiceImpl  implements DataBaseService {
 
         Table table = getTableList(schemaName).stream().filter(m -> m.getName().equals(tableName)).findFirst().orElse(null);
         if (table != null) {
-            String sql = MessageFormat.format("drop table if exists `{0}`;\n", table.getName());
+            String sql = MessageFormat.format("drop table \"{0}\";\n", table.getName());
             return sql;
         } else {
             throw new RuntimeException(MessageFormat.format("表名[{0}]不存在", tableName));
