@@ -5,6 +5,9 @@
         <v-btn icon @click="query">
           <v-icon>fa-play</v-icon>
         </v-btn>
+        <v-btn @click="mysql2dm">
+          mysql转dm
+        </v-btn>
       </v-toolbar>
       <v-textarea label="SQL" id="sql_input" v-model="sql" hint="请输入sql"></v-textarea>
     </template>
@@ -88,6 +91,26 @@
           }
         }
         return headers;
+      },
+      mysql2dm(){
+        let that =this;
+        that.sql = that.editor.getValue();
+        let sql = that.sql;
+        if (that.editor.getSelection()) {
+          sql = that.editor.getSelection();
+        }
+        let data = new FormData();
+        data.append('sql',sql)
+        this.$axios.post(config.apiUrl+'/api/mysql2dm',data).then(res=>{
+          if(res.data.success){
+             that.editor.setValue(that.editor.getValue() + '\n' + res.data.data + '\n');
+          }else{
+             that.$throw(res.data.message);
+          }
+        }).catch(err => {
+          that.$throw(err)
+        })
+
       },
       query() {
         let that = this;

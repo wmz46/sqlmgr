@@ -4,11 +4,13 @@ import com.alibaba.druid.util.JdbcConstants;
 import com.iceolive.sqlmgr.model.BaseResult;
 import com.iceolive.sqlmgr.model.vo.SchemaVO;
 import com.iceolive.sqlmgr.service.DataBaseService;
+import com.iceolive.sqlmgr.service.SqlTranslationService;
 import com.iceolive.sqlmgr.service.impl.DmDataBaseServiceImpl;
 import com.iceolive.sqlmgr.service.impl.H2DataBaseServiceImpl;
 import com.iceolive.sqlmgr.service.impl.SqlServerDataBaseServiceImpl;
 import com.iceolive.sqlmgr.service.impl.MySqlDataBaseServiceImpl;
 import org.apache.commons.lang3.StringUtils;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
@@ -23,6 +25,8 @@ import java.util.Map;
 @RestController
 @RequestMapping("/api")
 public class ApiController {
+    @Autowired
+    SqlTranslationService sqlTranslationService;
     /**
      * 获取数据库信息
      * @param driver
@@ -106,6 +110,16 @@ public class ApiController {
         return result.success(sql);
     }
 
+    /**
+     * mysql转dm
+     * @param sql
+     * @return
+     */
+    @RequestMapping(value = "/mysql2dm")
+    public BaseResult mysql2dm(String sql) {
+        BaseResult result = new BaseResult();
+        return result.success(sqlTranslationService.mysql2dm(sql));
+    }
     private DataBaseService getDataBaseService(String driver, String url, String username, String password) {
         DataBaseService service = null;
         if (JdbcConstants.MYSQL.equals(driver)) {

@@ -28,7 +28,7 @@ public class DmDataBaseServiceImpl implements DataBaseService {
     private JdbcTemplate jdbcTemplate;
     private static final String[] NUMERIC_TYPE = new String[]{"TINYINT", "SMALLINT", "MEDIUMINT", "INT", "INTEGER",
             "BIGINT", "FLOAT", "DOUBLE", "DECIMAL"};
-    private static final String[] STRING_TYPE = new String[]{"CHAR","VARCHAR","VARCHAR2"};
+    private static final String[] STRING_TYPE = new String[]{"CHAR","CHARACTER","VARCHAR","VARCHAR2"};
 
     public DmDataBaseServiceImpl(String url, String username, String password) {
         this.url = url;
@@ -68,7 +68,7 @@ public class DmDataBaseServiceImpl implements DataBaseService {
         params.add(tableName);
         String sql = "SELECT t1.NAME name,\n" +
                 "t3.COMMENTS \"comment\",\n" +
-                "t1.TYPE$ type,\n" +
+                "(CASE WHEN t1.TYPE$='CLASS234881124' THEN 'ST_GEOMETRY' ELSE t1.TYPE$ END) type,\n" +
                 "(CASE WHEN t1.NULLABLE$='N' THEN 0 ELSE 1 END) nullable,\n" +
                 "(SELECT COUNT(1) FROM USER_CONS_COLUMNS t4 LEFT JOIN USER_CONSTRAINTS t5 ON t4.CONSTRAINT_NAME=t5.CONSTRAINT_NAME WHERE t5.CONSTRAINT_TYPE = 'P' AND t4.TABLE_NAME=? AND t4.COLUMN_NAME=t1.NAME) primaryKey,\n" +
                 "(CASE WHEN t1.info2 =1 THEN 1 ELSE 0 END) \"identity\",\n" +
