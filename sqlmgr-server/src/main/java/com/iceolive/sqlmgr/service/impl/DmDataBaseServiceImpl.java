@@ -52,10 +52,11 @@ public class DmDataBaseServiceImpl implements DataBaseService {
 
     @Override
     public List<Table> getTableList(String schemaName) {
-        String sql = "SELECT TABLE_NAME name,COMMENTS \"comment\" \n" +
-                "from USER_TAB_COMMENTS \n" +
-                "WHERE table_type = 'TABLE'\n" +
-                "ORDER BY TABLE_NAME";
+        String sql = "SELECT t1.TABLE_NAME name,\n"+
+                "(SELECT top 1 t2.COMMENTS from USER_TAB_COMMENTS t2 WHERE t2.TABLE_TYPE='TABLE' AND t2.TABLE_NAME=t1.TABLE_NAME) \"comment\" \n" +
+                "from dba_tables t1\n" +
+                "WHERE t1.OWNER=(select user from dual)\n" +
+                "ORDER BY t1.TABLE_NAME";
         List<Table> tableList = jdbcTemplate.query(sql, new BeanPropertyRowMapper<>(Table.class));
 
         return tableList;
