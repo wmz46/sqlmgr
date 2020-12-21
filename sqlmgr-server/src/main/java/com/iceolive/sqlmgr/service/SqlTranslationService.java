@@ -2,12 +2,13 @@ package com.iceolive.sqlmgr.service;
 
 import com.alibaba.druid.sql.SQLUtils;
 import com.alibaba.druid.sql.ast.SQLStatement;
-import com.alibaba.druid.sql.ast.statement.*;
+import com.alibaba.druid.sql.ast.statement.SQLColumnDefinition;
+import com.alibaba.druid.sql.ast.statement.SQLColumnPrimaryKey;
+import com.alibaba.druid.sql.ast.statement.SQLNotNullConstraint;
+import com.alibaba.druid.sql.ast.statement.SQLTableElement;
 import com.alibaba.druid.sql.dialect.mysql.ast.MySqlPrimaryKey;
 import com.alibaba.druid.sql.dialect.mysql.ast.statement.MySqlCreateTableStatement;
 import com.alibaba.druid.util.JdbcConstants;
-import com.iceolive.sqlmgr.model.Column;
-import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Service;
 
 import java.text.MessageFormat;
@@ -28,10 +29,23 @@ public class SqlTranslationService {
         for (SQLStatement sqlStatement : statementList) {
             if (sqlStatement instanceof MySqlCreateTableStatement) {
                 MySqlCreateTableStatement mySqlCreateTableStatement = (MySqlCreateTableStatement) sqlStatement;
-                StringBuilder sb2 = new StringBuilder();
+                String tableName = mySqlCreateTableStatement.getTableSource().toString().replace("`", "\"");
+
+                StringBuilder sb2 = new StringBuilder();//注释
+                StringBuilder sb3 = new StringBuilder();//是否建表
+                if(mySqlCreateTableStatement.isIfNotExiists()){
+                    sb3.append("DECLARE\n");
+                    sb3.append("  V_COUNT INT:=0;\n");
+                    sb3.append("  V_SQL TEXT;\n");
+                    sb3.append("BEGIN\n");
+                    sb3.append("  select count(1) into V_COUNT from dba_tables where TABLE_NAME='"+tableName.replace("\"","")+"' and OWNER=(select user from dual);\n");
+                    sb3.append("  IF(V_COUNT=0)\n");
+                    sb3.append("  THEN\n");
+                    sb3.append("    V_SQL='");
+
+                }
                 //建表语句
                 sb.append("create table ");
-                String tableName = mySqlCreateTableStatement.getTableSource().toString().replace("`", "\"");
                 sb.append(tableName);
                 sb.append("(\n");
                 for (SQLTableElement sqlTableElement : mySqlCreateTableStatement.getTableElementList()) {
@@ -99,6 +113,15 @@ public class SqlTranslationService {
                     sb.append(MessageFormat.format("comment on table  {0} is {1};\n", tableName, mySqlCreateTableStatement.getComment().toString()));
                 }
                 sb.append(sb2);
+                if(mySqlCreateTableStatement.isIfNotExiists()){
+                    sb3.append(sb.toString().replace("'","''"));
+                    sb3.append("';\n");
+                    //todo 这里不能执行多条
+                    sb3.append("EXECUTE IMMEDIATE V_SQL;\n");
+                    sb3.append("    END IF;\n");
+                    sb3.append("END;\n");
+                    sb = sb3;
+                }
             } else {
                 List<SQLStatement> sqlStatementList = new ArrayList<>();
                 sqlStatementList.add(sqlStatement);
