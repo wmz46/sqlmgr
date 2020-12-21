@@ -66,6 +66,7 @@ public class DmDataBaseServiceImpl implements DataBaseService {
         List<Object> params = new ArrayList<>();
         params.add(tableName);
         params.add(tableName);
+        params.add(schemaName);
         String sql = "SELECT t1.NAME name,\n" +
                 "t3.COMMENTS \"comment\",\n" +
                 "t1.TYPE$ type,\n" +
@@ -76,9 +77,10 @@ public class DmDataBaseServiceImpl implements DataBaseService {
                 "t1.DEFVAL columnDefault,\n" +
                 "t1.SCALE numericScale\n" +
                 "FROM SYS.SYSCOLUMNS t1\n" +
-                "INNER JOIN SYS.SYSOBJECTS t2 ON t1.ID = t2.ID\n" +
+                "INNER JOIN SYS.SYSOBJECTS t2 ON t1.ID = t2.ID AND  t2.SUBTYPE$='UTAB'\n" +
                 "LEFT JOIN USER_COL_COMMENTS t3 ON t2.NAME = t3.TABLE_NAME AND t1.NAME = t3.COLUMN_NAME\n" +
-                "WHERE  t2.NAME=? AND t2.TYPE$='SCHOBJ' AND t2.SUBTYPE$='UTAB'\n" +
+                "INNER JOIN SYS.SYSOBJECTS t6 ON t6.ID = t2.SCHID  AND t6.TYPE$='SCH'\n"+
+                "WHERE  t2.NAME=? AND t6.NAME=?\n" +
                 "ORDER BY t1.COLID;";
         List<Column> columnList = jdbcTemplate.query(sql, params.toArray(), new BeanPropertyRowMapper<>(Column.class));
         for(Column column : columnList){
