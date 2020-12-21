@@ -10,7 +10,7 @@
     </parent>
     <groupId>com.iceolive</groupId>
     <artifactId>sqlmgr</artifactId>
-    <version>0.0.1</version>
+    <version>0.0.2</version>
     <name>sqlmgr</name>
     <description>一个基于springboot的数据库管理工具</description>
 

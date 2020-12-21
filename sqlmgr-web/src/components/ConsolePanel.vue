@@ -1,45 +1,50 @@
 <template>
-  <splitPane @resize="resize" split="horizontal">
-    <template slot="paneL">
-      <v-toolbar flat>
-        <v-btn icon @click="query">
-          <v-icon>fa-play</v-icon>
-        </v-btn>
-        <v-btn @click="mysql2dm">
-          mysql转dm
-        </v-btn>
-      </v-toolbar>
-      <v-textarea label="SQL" id="sql_input" v-model="sql" hint="请输入sql"></v-textarea>
-    </template>
-    <template slot="paneR">
-      <v-card>
-        <v-tabs v-model="tab" dark>
-          <v-tab v-for="(result,i) in results" :key="i">
-            {{ result.sql }}
-          </v-tab>
-        </v-tabs>
-        <v-tabs-items v-model="tab">
-          <v-tab-item v-for="(result,i) in results" :key="i">
-            <v-data-table :height="tableHeight" fixed-header show-select v-if="result.cmd=='query'"
-              :headers="getHeaders(result.result)" :items="result.result">
-            </v-data-table>
-            <v-card flat v-if="result.cmd!='query'">
-              <v-card-text>{{result.result}}行受影响</v-card-text>
-            </v-card>
-          </v-tab-item>
-        </v-tabs-items>
-      </v-card>
-    </template>
-  </splitPane>
+  <div class="fill-height">
+    <splitPane @resize="resize" split="horizontal">
+      <template slot="paneL">
+        <v-toolbar flat>
+          <v-btn icon @click="query">
+            <v-icon>fa-play</v-icon>
+          </v-btn>
+          <v-btn icon @click="showTranslate">
+            <v-icon>mdi-translate</v-icon>
+          </v-btn>
+        </v-toolbar>
+        <v-textarea label="SQL" id="sql_input" v-model="sql" hint="请输入sql"></v-textarea>
+      </template>
+      <template slot="paneR">
+        <v-card>
+          <v-tabs v-model="tab" dark>
+            <v-tab v-for="(result,i) in results" :key="i">
+              {{ result.sql }}
+            </v-tab>
+          </v-tabs>
+          <v-tabs-items v-model="tab">
+            <v-tab-item v-for="(result,i) in results" :key="i">
+              <v-data-table :height="tableHeight" fixed-header show-select v-if="result.cmd=='query'"
+                :headers="getHeaders(result.result)" :items="result.result">
+              </v-data-table>
+              <v-card flat v-if="result.cmd!='query'">
+                <v-card-text>{{result.result}}行受影响</v-card-text>
+              </v-card>
+            </v-tab-item>
+          </v-tabs-items>
+        </v-card>
+      </template>
+    </splitPane>
+    <TranslateDialog ref="translateDialog"></TranslateDialog>
+    </div>
 </template>
 <script>
   import splitPane from 'vue-splitpane'
   import config from '@/plugins/config'
   import ConnectConfig from '@/plugins/connectConfig'
+  import TranslateDialog from "@/components/TranslateDialog"
   import CodeMirror from '@/plugins/codeMirror'
   export default {
     components: {
-      splitPane
+      splitPane,
+      TranslateDialog
     },
     data() {
       return {
@@ -79,7 +84,9 @@
       this.tableHeight = (paneRHeight - 110);
     },
     methods: {
-
+      showTranslate(){
+        this.$refs.translateDialog.show()
+      },
       getHeaders(list) {
         let headers = [];
         if (list.length > 0) {
@@ -92,26 +99,7 @@
         }
         return headers;
       },
-      mysql2dm(){
-        let that =this;
-        that.sql = that.editor.getValue();
-        let sql = that.sql;
-        if (that.editor.getSelection()) {
-          sql = that.editor.getSelection();
-        }
-        let data = new FormData();
-        data.append('sql',sql)
-        this.$axios.post(config.apiUrl+'/api/mysql2dm',data).then(res=>{
-          if(res.data.success){
-             that.editor.setValue(that.editor.getValue() + '\n' + res.data.data + '\n');
-          }else{
-             that.$throw(res.data.message);
-          }
-        }).catch(err => {
-          that.$throw(err)
-        })
 
-      },
       query() {
         let that = this;
         let connect = ConnectConfig.getConnects()[this.name]
