@@ -30,19 +30,17 @@ public class SqlTranslationService {
             if (sqlStatement instanceof MySqlCreateTableStatement) {
                 MySqlCreateTableStatement mySqlCreateTableStatement = (MySqlCreateTableStatement) sqlStatement;
                 String tableName = mySqlCreateTableStatement.getTableSource().toString().replace("`", "\"");
-
-                StringBuilder sb2 = new StringBuilder();//注释
-                StringBuilder sb3 = new StringBuilder();//是否建表
+                //用于存储字段注释
+                StringBuilder sb2 = new StringBuilder();
+                //是否建表前检测
+                StringBuilder sb3 = new StringBuilder();
                 if(mySqlCreateTableStatement.isIfNotExiists()){
                     sb3.append("DECLARE\n");
                     sb3.append("  V_COUNT INT:=0;\n");
                     sb3.append("  V_SQL TEXT;\n");
                     sb3.append("BEGIN\n");
                     sb3.append("  select count(1) into V_COUNT from dba_tables where TABLE_NAME='"+tableName.replace("\"","")+"' and OWNER=(select user from dual);\n");
-                    sb3.append("  IF(V_COUNT=0)\n");
-                    sb3.append("  THEN\n");
-                    sb3.append("    V_SQL='");
-
+                    sb3.append("  IF(V_COUNT=0) THEN\n");
                 }
                 //建表语句
                 sb.append("create table ");
@@ -114,10 +112,15 @@ public class SqlTranslationService {
                 }
                 sb.append(sb2);
                 if(mySqlCreateTableStatement.isIfNotExiists()){
-                    sb3.append(sb.toString().replace("'","''"));
-                    sb3.append("';\n");
-                    //todo 这里不能执行多条
-                    sb3.append("EXECUTE IMMEDIATE V_SQL;\n");
+                    //执行多条
+                   for(String str : sb.toString().split(";")){
+                       if(str.trim().length()>0) {
+                           sb3.append("    V_SQL='");
+                           sb3.append(str.replace("'", "''") + ";");
+                           sb3.append("';\n");
+                           sb3.append("    EXECUTE IMMEDIATE V_SQL;\n");
+                       }
+                   }
                     sb3.append("    END IF;\n");
                     sb3.append("END;\n");
                     sb = sb3;
