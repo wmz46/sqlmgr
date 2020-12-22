@@ -22,8 +22,15 @@ import java.util.List;
  **/
 @Service
 public class SqlTranslationService {
-
+    /**
+     * mysql翻译成达梦
+     * @param sql
+     * @return
+     */
     public String mysql2dm(String sql) {
+        if(sql == null){
+            return sql;
+        }
         StringBuilder sb = new StringBuilder();
         List<SQLStatement> statementList = SQLUtils.parseStatements(sql, JdbcConstants.MYSQL);
         for (SQLStatement sqlStatement : statementList) {
