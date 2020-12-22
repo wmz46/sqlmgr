@@ -29,17 +29,17 @@ public class SqlTranslationService {
         for (SQLStatement sqlStatement : statementList) {
             if (sqlStatement instanceof MySqlCreateTableStatement) {
                 MySqlCreateTableStatement mySqlCreateTableStatement = (MySqlCreateTableStatement) sqlStatement;
-                String tableName = mySqlCreateTableStatement.getTableSource().toString().replace("`", "\"");
+                String tableName = mySqlCreateTableStatement.getTableSource().toString().replace("`", "");
                 //用于存储字段注释
                 StringBuilder sb2 = new StringBuilder();
                 //是否建表前检测
                 StringBuilder sb3 = new StringBuilder();
-                if(mySqlCreateTableStatement.isIfNotExiists()){
+                if (mySqlCreateTableStatement.isIfNotExiists()) {
                     sb3.append("DECLARE\n");
                     sb3.append("  V_COUNT INT:=0;\n");
                     sb3.append("  V_SQL TEXT;\n");
                     sb3.append("BEGIN\n");
-                    sb3.append("  select count(1) into V_COUNT from dba_tables where TABLE_NAME='"+tableName.replace("\"","")+"' and OWNER=(select user from dual);\n");
+                    sb3.append("  select count(1) into V_COUNT from dba_tables where TABLE_NAME='" + tableName + "' and OWNER=(select user from dual);\n");
                     sb3.append("  IF(V_COUNT=0) THEN\n");
                 }
                 //建表语句
@@ -49,14 +49,14 @@ public class SqlTranslationService {
                 for (SQLTableElement sqlTableElement : mySqlCreateTableStatement.getTableElementList()) {
                     if (sqlTableElement instanceof SQLColumnDefinition) {
                         SQLColumnDefinition sqlColumnDefinition = (SQLColumnDefinition) sqlTableElement;
-                        String columnName = sqlColumnDefinition.getColumnName().replace("`", "\"");
+                        String columnName = sqlColumnDefinition.getColumnName().replace("`", "");
                         //添加字段注释
                         if (sqlColumnDefinition.getComment() != null) {
-                            sb2.append(MessageFormat.format("comment on column {0}.{1} is {2};\n", tableName, columnName, sqlColumnDefinition.getComment().toString()));
+                            sb2.append(MessageFormat.format("comment on column \"{0}\".\"{1}\" is {2};\n", tableName, columnName, sqlColumnDefinition.getComment().toString()));
                         }
-                        sb.append("    " + columnName);
+                        sb.append(MessageFormat.format("    \"{0}\"", columnName));
                         String dataType = sqlColumnDefinition.getDataType().getName().toLowerCase();
-                        switch (dataType){
+                        switch (dataType) {
                             case "tinyint":
                                 sb.append(" tinyint");
                                 break;
@@ -65,17 +65,17 @@ public class SqlTranslationService {
                                 break;
                             case "float":
                             case "double":
-                                List args =  sqlColumnDefinition.getDataType().getArguments();
-                                if( args.size()==2){
-                                    sb.append(" numeric("+ args.get(0)+","+args.get(1)+")");
-                                }else{
+                                List args = sqlColumnDefinition.getDataType().getArguments();
+                                if (args.size() == 2) {
+                                    sb.append(" numeric(" + args.get(0) + "," + args.get(1) + ")");
+                                } else {
                                     sb.append(" double");
                                 }
                                 break;
-                            case "point" :
+                            case "point":
                             case "multipolygon":
                                 //空间类型
-                                sb.append(" st_"+dataType);
+                                sb.append(" st_" + dataType);
                                 break;
                             default:
                                 sb.append(" " + sqlColumnDefinition.getDataType().toString().toLowerCase());
@@ -95,6 +95,7 @@ public class SqlTranslationService {
                         }
                         MySqlPrimaryKey primaryKey = (MySqlPrimaryKey) mySqlCreateTableStatement.getTableElementList().stream().filter(m -> m instanceof MySqlPrimaryKey).findFirst().orElse(null);
                         if (primaryKey != null && primaryKey.containsColumn(sqlColumnDefinition.getColumnName())) {
+                            //由于primaryKey存储的列名不确定前后有没有加`，这里用字段定义里面的列名。
                             sb.append("\n        primary key");
                         }
                         if (sqlColumnDefinition.getConstraints().stream().filter(m -> m instanceof SQLColumnPrimaryKey).count() > 0) {
@@ -108,19 +109,19 @@ public class SqlTranslationService {
                 sb.append(");\n");
                 //添加表注释
                 if (mySqlCreateTableStatement.getComment() != null) {
-                    sb.append(MessageFormat.format("comment on table  {0} is {1};\n", tableName, mySqlCreateTableStatement.getComment().toString()));
+                    sb.append(MessageFormat.format("comment on table  \"{0}\" is {1};\n", tableName, mySqlCreateTableStatement.getComment().toString()));
                 }
                 sb.append(sb2);
-                if(mySqlCreateTableStatement.isIfNotExiists()){
+                if (mySqlCreateTableStatement.isIfNotExiists()) {
                     //执行多条
-                   for(String str : sb.toString().split(";")){
-                       if(str.trim().length()>0) {
-                           sb3.append("    V_SQL='");
-                           sb3.append(str.replace("'", "''") + ";");
-                           sb3.append("';\n");
-                           sb3.append("    EXECUTE IMMEDIATE V_SQL;\n");
-                       }
-                   }
+                    for (String str : sb.toString().split(";")) {
+                        if (str.trim().length() > 0) {
+                            sb3.append("    V_SQL='");
+                            sb3.append(str.replace("'", "''") + ";");
+                            sb3.append("';\n");
+                            sb3.append("    EXECUTE IMMEDIATE V_SQL;\n");
+                        }
+                    }
                     sb3.append("    END IF;\n");
                     sb3.append("END;\n");
                     sb = sb3;
