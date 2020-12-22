@@ -31,3 +31,10 @@ build/
 
 ### VS Code ###
 .vscode/
+
+### 前端打包文件 ###
+/sqlmgr-server/src/main/resources/static/css/chunk-*
+/sqlmgr-server/src/main/resources/static/favicon.ico
+/sqlmgr-server/src/main/resources/static/index.html
+/sqlmgr-server/src/main/resources/static/js/index.*
+/sqlmgr-server/src/main/resources/static/js/chunk-*
