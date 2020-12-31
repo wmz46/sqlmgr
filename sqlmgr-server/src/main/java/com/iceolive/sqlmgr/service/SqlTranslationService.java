@@ -100,6 +100,7 @@ public class SqlTranslationService {
                                 sb.append(" null");
                             }
                             if (sqlColumnDefinition.getDefaultExpr() != null) {
+                                //当默认值不是null，才需要添加
                                 if(!sqlColumnDefinition.getDefaultExpr().toString().toLowerCase().equals("null")){
                                     sb.append(" default " + sqlColumnDefinition.getDefaultExpr().toString());
                                 }
