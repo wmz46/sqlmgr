@@ -100,7 +100,9 @@ public class SqlTranslationService {
                                 sb.append(" null");
                             }
                             if (sqlColumnDefinition.getDefaultExpr() != null) {
-                                sb.append(" default " + sqlColumnDefinition.getDefaultExpr().toString());
+                                if(!sqlColumnDefinition.getDefaultExpr().toString().toLowerCase().equals("null")){
+                                    sb.append(" default " + sqlColumnDefinition.getDefaultExpr().toString());
+                                }
                             }
                         }
                         MySqlPrimaryKey primaryKey = (MySqlPrimaryKey) mySqlCreateTableStatement.getTableElementList().stream().filter(m -> m instanceof MySqlPrimaryKey).findFirst().orElse(null);
