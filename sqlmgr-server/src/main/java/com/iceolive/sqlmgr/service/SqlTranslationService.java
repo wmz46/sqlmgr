@@ -79,6 +79,9 @@ public class SqlTranslationService {
                                     sb.append(" double");
                                 }
                                 break;
+                            case "json":
+                                sb.append(" text");
+                                break;
                             case "point":
                             case "multipolygon":
                                 //空间类型
